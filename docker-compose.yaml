@@ -37,7 +37,7 @@ services:
       DB_NAME: grocery_db
       PORT: 3000
       NODE_ENV: development # For auto-table creation
-      FRONTEND_URL: https://${DOMAIN_NAME}
+      FRONTEND_URL: http://${DOMAIN_NAME}
     ports:
       - "3000:3000"
     depends_on:
@@ -50,9 +50,9 @@ services:
     build:
       context: ./grocery-frontend
       dockerfile: dockerfile
+      args:
+        VITE_API_URL: "http://${DOMAIN_NAME}:3000/api"
     container_name: grocery-frontend
-    environment:
-      VITE_API_URL: https://${DOMAIN_NAME}/api
     restart: always
     ports:
       - "80:80"
