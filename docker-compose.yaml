@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: grocery-db
+    restart: always
+    environment:
+      POSTGRES_DB: grocery_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grocery-network
+
+  backend:
+    build:
+      context: ./grocery-backend
+      dockerfile: dockerfile
+    container_name: grocery-backend
+    restart: always
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: grocery_db
+      PORT: 3000
+      NODE_ENV: development # For auto-table creation
+      FRONTEND_URL: https://${DOMAIN_NAME}
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - grocery-network
+
+  frontend:
+    build:
+      context: ./grocery-frontend
+      dockerfile: dockerfile
+    container_name: grocery-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-ssl:/etc/nginx/ssl # For SSL certificates
+    depends_on:
+      - backend
+    networks:
+      - grocery-network
+networks:
+  grocery-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
