@@ -51,6 +51,8 @@ services:
       context: ./grocery-frontend
       dockerfile: dockerfile
     container_name: grocery-frontend
+    environment:
+      VITE_API_URL: https://${DOMAIN_NAME}/api
     restart: always
     ports:
       - "80:80"
